@@ -11,14 +11,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing song name or artist" }, { status: 400 });
     }
 
-    const prompt = `Find the key and scale of the song \"${songName}\" by \"${artist}\" and suggest 2-3 reliable bass tab URLs from the internet. Respond in this exact JSON format:
+    const prompt = `Find the key and scale of the song \"${songName}\" by \"${artist}\" Respond in this exact JSON format:
 {
-  \"scale\": \"<scale>\",
-  \"tabLinks\": [\"<url1>\", \"<url2>\"]
+  \"scale\": \"<scale>\"
 }`;
 
     const chatResponse = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "user",
@@ -39,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(json);
   } catch (err) {
-    console.error("Error in /api/suggest-bass-tab:", err);
+    console.error("Error in /api/find-key:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

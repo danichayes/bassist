@@ -7,25 +7,33 @@ import axios from "axios";
 
 export default function TrackInfo({ accessToken }: { accessToken: string }) {
   const { songName, artist } = useCurrentTrackInfo(accessToken);
-  const [tabData, setTabData] = useState<{ tabLinks: string[]; scale: string | null } | null>(null);
+  const [scale, setScale] = useState<{ scale: string | null } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingTabs, setLoadingTabs] = useState(false);
+  const [songsterrTabs, setSongsterrTabs] = useState<{ title: string; url: string }[] | null>(null);
 
-  const handleSuggestTabs = async () => {
+
+  const handleFindKey = async () => {
     if (!songName || !artist) return;
     setLoading(true);
     try {
-      const res = await axios.post("/api/suggest-bass-tab", {
+      const res = await axios.post("/api/find-key", {
         songName,
         artist,
       });
-      setTabData(res.data);
+      setScale(res.data);
     } catch (err) {
       console.error("Error suggesting tabs:", err);
-      setTabData(null);
+      setScale(null);
     } finally {
       setLoading(false);
     }
   };
+  function searchBassTab() {
+    const query = encodeURIComponent(`bass tab ${songName} ${artist} bass tab`);
+    const url = `https://www.google.com/search?q=${query}`;
+    window.open(url, "_blank");
+  }
 
   return (
     <div className="mt-4 text-white text-center">
@@ -36,25 +44,46 @@ export default function TrackInfo({ accessToken }: { accessToken: string }) {
 
       <Button
         className="mt-3 bg-purple-500 hover:bg-purple-600"
-        onClick={handleSuggestTabs}
+        onClick={handleFindKey}
         disabled={!songName || !artist || loading}
       >
-        {loading ? "Searching..." : "Find Bass Tabs + Scale"}
+        {loading ? "Searching..." : "Find Scale"}
       </Button>
 
-      {tabData && (
+      {scale && (
         <div className="mt-4 text-left text-sm">
-          <p className="font-bold">🎼 Key/Scale: {tabData.scale || "Unknown"}</p>
-          <p className="font-bold mt-2">🎸 Bass Tabs:</p>
-          <ul className="list-disc list-inside">
-            {tabData.tabLinks.map((link, i) => (
-              <li key={i}>
-                <a href={link} className="underline text-blue-400" target="_blank" rel="noreferrer">
-                  {link}
-                </a>
-              </li>
-            ))}
-          </ul>
+          <p className="font-bold">🎼 Key/Scale: {scale.scale || "Unknown"}</p>
+        </div>
+      )}
+      <Button
+        className="mt-4 bg-blue-400 hover:bg-blue-500 text-white"
+        onClick={searchBassTab}
+        disabled={!songName || !artist || loadingTabs}
+      >
+        {loadingTabs ? "Searching..." : "Search Bass Tabs on Google"}
+      </Button>
+
+      {songsterrTabs && (
+        <div className="mt-4 text-left text-sm">
+          <p className="font-bold">🎸 Bass Tabs:</p>
+          {songsterrTabs.length > 0 ? (
+            <ul className="list-disc list-inside">
+              {songsterrTabs.map((tab, i) => (
+                <li key={i}>
+                  <a
+                    href={tab.url}
+                    className="underline text-blue-400"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {tab.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No tabs found on Songsterr for this track.</p>
+          )}
         </div>
       )}
     </div>
